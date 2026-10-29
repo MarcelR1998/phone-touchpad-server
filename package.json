@@ -1,0 +1,17 @@
+{
+  "name": "phone-touchpad-server",
+  "version": "1.0.0",
+  "description": "Use your phone as a wireless trackpad and keyboard for your computer. No app required, just open a URL in your phone's browser.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.2.1",
+    "socket.io": "^4.8.3"
+  }
+}

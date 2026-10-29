@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Phone Touchpad</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; touch-action: none; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #1a1a2e;
+    color: #eee;
+    display: flex;
+    flex-direction: column;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  #status {
+    padding: 8px 16px;
+    text-align: center;
+    font-size: 13px;
+    background: #16213e;
+    color: #888;
+  }
+  #status.connected { color: #4ade80; }
+
+  #trackpad {
+    flex: 1;
+    background: #16213e;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #trackpad::after {
+    content: "Trackpad";
+    color: #334;
+    font-size: 24px;
+    pointer-events: none;
+  }
+
+  #buttons {
+    display: flex;
+    height: 70px;
+    gap: 2px;
+    background: #0f0f23;
+    padding: 2px;
+  }
+  .btn {
+    flex: 1;
+    background: #1e293b;
+    border: none;
+    color: #94a3b8;
+    font-size: 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn:active { background: #334155; }
+
+  #keyboard-toggle {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    width: 44px;
+    height: 44px;
+    background: #0f3460;
+    border: none;
+    border-radius: 8px;
+    color: #94a3b8;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #keyboard-toggle.active { background: #1e40af; color: #fff; }
+
+  #keyboard {
+    display: none;
+    background: #0f0f23;
+    padding: 4px;
+    gap: 3px;
+  }
+  #keyboard.visible { display: flex; flex-direction: column; }
+
+  .kb-row {
+    display: flex;
+    gap: 3px;
+    justify-content: center;
+  }
+  .key {
+    height: 42px;
+    min-width: 30px;
+    padding: 0 6px;
+    background: #1e293b;
+    border: none;
+    border-radius: 5px;
+    color: #cbd5e1;
+    font-size: 14px;
+    flex: 1;
+    max-width: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .key:active { background: #475569; }
+  .key.wide { max-width: 70px; flex: 1.5; font-size: 11px; }
+  .key.wider { max-width: 90px; flex: 2; font-size: 11px; }
+  .key.space { max-width: none; flex: 6; }
+  .key.active-mod { background: #1e40af; color: #fff; }
+
+  #scroll-area {
+    width: 50px;
+    background: #0f3460;
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.6;
+  }
+  #scroll-area::after {
+    content: "↕";
+    color: #668;
+    font-size: 20px;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<div id="status">Connecting...</div>
+
+<div id="trackpad">
+  <div id="scroll-area"></div>
+  <button id="keyboard-toggle">&#9000;</button>
+</div>
+
+<div id="keyboard">
+  <div class="kb-row">
+    <button class="key" data-key="Escape" style="font-size:11px">Esc</button>
+    <button class="key" data-key="1">1</button>
+    <button class="key" data-key="2">2</button>
+    <button class="key" data-key="3">3</button>
+    <button class="key" data-key="4">4</button>
+    <button class="key" data-key="5">5</button>
+    <button class="key" data-key="6">6</button>
+    <button class="key" data-key="7">7</button>
+    <button class="key" data-key="8">8</button>
+    <button class="key" data-key="9">9</button>
+    <button class="key" data-key="0">0</button>
+    <button class="key wide" data-key="Backspace">&#9003;</button>
+  </div>
+  <div class="kb-row">
+    <button class="key wide" data-key="Tab">Tab</button>
+    <button class="key" data-key="q">q</button>
+    <button class="key" data-key="w">w</button>
+    <button class="key" data-key="e">e</button>
+    <button class="key" data-key="r">r</button>
+    <button class="key" data-key="t">t</button>
+    <button class="key" data-key="y">y</button>
+    <button class="key" data-key="u">u</button>
+    <button class="key" data-key="i">i</button>
+    <button class="key" data-key="o">o</button>
+    <button class="key" data-key="p">p</button>
+  </div>
+  <div class="kb-row">
+    <button class="key wide" data-key="CapsLock">Caps</button>
+    <button class="key" data-key="a">a</button>
+    <button class="key" data-key="s">s</button>
+    <button class="key" data-key="d">d</button>
+    <button class="key" data-key="f">f</button>
+    <button class="key" data-key="g">g</button>
+    <button class="key" data-key="h">h</button>
+    <button class="key" data-key="j">j</button>
+    <button class="key" data-key="k">k</button>
+    <button class="key" data-key="l">l</button>
+    <button class="key wide" data-key="Enter">Enter</button>
+  </div>
+  <div class="kb-row">
+    <button class="key wider" data-mod="Shift">Shift</button>
+    <button class="key" data-key="z">z</button>
+    <button class="key" data-key="x">x</button>
+    <button class="key" data-key="c">c</button>
+    <button class="key" data-key="v">v</button>
+    <button class="key" data-key="b">b</button>
+    <button class="key" data-key="n">n</button>
+    <button class="key" data-key="m">m</button>
+    <button class="key" data-key=",">,</button>
+    <button class="key" data-key=".">.</button>
+  </div>
+  <div class="kb-row">
+    <button class="key wide" data-mod="Ctrl">Ctrl</button>
+    <button class="key wide" data-mod="Super">Super</button>
+    <button class="key wide" data-mod="Alt">Alt</button>
+    <button class="key space" data-key="Space">Space</button>
+    <button class="key" data-key="Left">&#9664;</button>
+    <button class="key" data-key="Up">&#9650;</button>
+    <button class="key" data-key="Down">&#9660;</button>
+    <button class="key" data-key="Right">&#9654;</button>
+  </div>
+  <div class="kb-row">
+    <button class="key" data-key="-">-</button>
+    <button class="key" data-key="=">=</button>
+    <button class="key" data-key="[">[</button>
+    <button class="key" data-key="]">]</button>
+    <button class="key" data-key="\">\</button>
+    <button class="key" data-key=";">;</button>
+    <button class="key" data-key="'">'</button>
+    <button class="key" data-key="/">/</button>
+    <button class="key" data-key="`">`</button>
+    <button class="key wide" data-key="Delete">Del</button>
+  </div>
+</div>
+
+<div id="buttons">
+  <button class="btn" id="btn-left">Left Click</button>
+  <button class="btn" id="btn-middle">Middle</button>
+  <button class="btn" id="btn-right">Right Click</button>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+
+const status = document.getElementById("status");
+const trackpad = document.getElementById("trackpad");
+const scrollArea = document.getElementById("scroll-area");
+
+socket.on("connect", () => {
+  status.textContent = "Connected";
+  status.className = "connected";
+});
+socket.on("disconnect", () => {
+  status.textContent = "Disconnected";
+  status.className = "";
+});
+
+// Sensitivity multiplier
+const SENSITIVITY = 2.0;
+const SCROLL_SENSITIVITY = 1.0;
+
+// --- Trackpad (move) ---
+let trackTouch = null;
+let lastX = 0, lastY = 0;
+
+// Tap detection
+let tapStart = 0;
+let tapX = 0, tapY = 0;
+const TAP_THRESHOLD = 10; // max px movement
+const TAP_TIME = 200; // max ms
+
+// Drag detection
+let dragTimeout = null;
+let isDragging = false;
+const LONG_PRESS_TIME = 400;
+
+trackpad.addEventListener("touchstart", (e) => {
+  const touch = findTrackTouch(e);
+  if (!touch) return;
+  e.preventDefault();
+  trackTouch = touch.identifier;
+  lastX = touch.clientX;
+  lastY = touch.clientY;
+  tapStart = Date.now();
+  tapX = touch.clientX;
+  tapY = touch.clientY;
+
+  // Start long-press timer for drag
+  dragTimeout = setTimeout(() => {
+    isDragging = true;
+    socket.emit("down", { button: 1 });
+    // Short vibration feedback if available
+    if (navigator.vibrate) navigator.vibrate(30);
+  }, LONG_PRESS_TIME);
+}, { passive: false });
+
+trackpad.addEventListener("touchmove", (e) => {
+  const touch = findTrackTouchMove(e);
+  if (!touch) return;
+  e.preventDefault();
+  const dx = (touch.clientX - lastX) * SENSITIVITY;
+  const dy = (touch.clientY - lastY) * SENSITIVITY;
+  lastX = touch.clientX;
+  lastY = touch.clientY;
+
+  // Cancel long-press if moved too much
+  const dist = Math.hypot(touch.clientX - tapX, touch.clientY - tapY);
+  if (dist > TAP_THRESHOLD && dragTimeout) {
+    clearTimeout(dragTimeout);
+    dragTimeout = null;
+  }
+
+  if (dx !== 0 || dy !== 0) {
+    socket.emit("move", { dx: Math.round(dx), dy: Math.round(dy) });
+  }
+}, { passive: false });
+
+trackpad.addEventListener("touchend", (e) => {
+  const touch = findTrackTouchEnd(e);
+  if (!touch) return;
+  e.preventDefault();
+
+  if (dragTimeout) {
+    clearTimeout(dragTimeout);
+    dragTimeout = null;
+  }
+
+  if (isDragging) {
+    socket.emit("up", { button: 1 });
+    isDragging = false;
+    return;
+  }
+
+  // Detect tap
+  const dt = Date.now() - tapStart;
+  const dist = Math.hypot(touch.clientX - tapX, touch.clientY - tapY);
+  if (dt < TAP_TIME && dist < TAP_THRESHOLD) {
+    socket.emit("click", { button: 1 });
+  }
+
+  trackTouch = null;
+}, { passive: false });
+
+trackpad.addEventListener("touchcancel", (e) => {
+  if (isDragging) {
+    socket.emit("up", { button: 1 });
+    isDragging = false;
+  }
+  if (dragTimeout) {
+    clearTimeout(dragTimeout);
+    dragTimeout = null;
+  }
+  trackTouch = null;
+});
+
+function findTrackTouch(e) {
+  for (const t of e.changedTouches) {
+    if (e.target === trackpad || e.target.closest("#trackpad")) {
+      // Ignore touches on the scroll area
+      const rect = scrollArea.getBoundingClientRect();
+      if (t.clientX >= rect.left) continue;
+      return t;
+    }
+  }
+  return null;
+}
+
+function findTrackTouchMove(e) {
+  for (const t of e.changedTouches) {
+    if (t.identifier === trackTouch) return t;
+  }
+  return null;
+}
+
+function findTrackTouchEnd(e) {
+  for (const t of e.changedTouches) {
+    if (t.identifier === trackTouch) return t;
+  }
+  return null;
+}
+
+// --- Scroll area ---
+let scrollTouch = null;
+let scrollLastY = 0;
+let scrollAccum = 0;
+const SCROLL_STEP = 30;
+
+scrollArea.addEventListener("touchstart", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  const t = e.changedTouches[0];
+  scrollTouch = t.identifier;
+  scrollLastY = t.clientY;
+  scrollAccum = 0;
+}, { passive: false });
+
+scrollArea.addEventListener("touchmove", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  for (const t of e.changedTouches) {
+    if (t.identifier !== scrollTouch) continue;
+    const dy = (t.clientY - scrollLastY) * SCROLL_SENSITIVITY;
+    scrollLastY = t.clientY;
+    scrollAccum += dy;
+    while (Math.abs(scrollAccum) >= SCROLL_STEP) {
+      socket.emit("scroll", { direction: scrollAccum > 0 ? "down" : "up" });
+      scrollAccum -= Math.sign(scrollAccum) * SCROLL_STEP;
+    }
+  }
+}, { passive: false });
+
+scrollArea.addEventListener("touchend", (e) => {
+  e.stopPropagation();
+  scrollTouch = null;
+});
+
+// --- Buttons ---
+document.getElementById("btn-left").addEventListener("touchstart", (e) => {
+  e.preventDefault();
+  socket.emit("click", { button: 1 });
+});
+document.getElementById("btn-middle").addEventListener("touchstart", (e) => {
+  e.preventDefault();
+  socket.emit("click", { button: 2 });
+});
+document.getElementById("btn-right").addEventListener("touchstart", (e) => {
+  e.preventDefault();
+  socket.emit("click", { button: 3 });
+});
+
+// --- Keyboard ---
+const keyboard = document.getElementById("keyboard");
+const kbToggle = document.getElementById("keyboard-toggle");
+let kbVisible = false;
+
+kbToggle.addEventListener("touchstart", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  kbVisible = !kbVisible;
+  keyboard.classList.toggle("visible", kbVisible);
+  kbToggle.classList.toggle("active", kbVisible);
+});
+
+let shiftActive = false;
+let capsActive = false;
+const activeModifiers = new Set();
+
+function updateKeyLabels() {
+  const upper = shiftActive || capsActive;
+  document.querySelectorAll(".key[data-key]").forEach(btn => {
+    const k = btn.dataset.key;
+    if (k.length === 1 && k.match(/[a-z]/)) {
+      btn.textContent = upper ? k.toUpperCase() : k.toLowerCase();
+    }
+  });
+}
+
+// Regular keys
+document.querySelectorAll(".key[data-key]").forEach(btn => {
+  btn.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    let key = btn.dataset.key;
+
+    if (key === "CapsLock") {
+      capsActive = !capsActive;
+      btn.classList.toggle("active-mod", capsActive);
+      socket.emit("key", { key: "CapsLock" });
+      updateKeyLabels();
+      return;
+    }
+
+    // Apply shift to letters
+    if (shiftActive && key.length === 1 && key.match(/[a-z]/)) {
+      key = key.toUpperCase();
+    }
+
+    socket.emit("key", { key });
+
+    // Release one-shot shift after a key press
+    if (shiftActive && activeModifiers.has("Shift")) {
+      shiftActive = false;
+      activeModifiers.delete("Shift");
+      socket.emit("modifier_up", { key: "Shift" });
+      document.querySelector("[data-mod='Shift']").classList.remove("active-mod");
+      updateKeyLabels();
+    }
+  }, { passive: false });
+});
+
+// Modifier keys (toggle on/off)
+document.querySelectorAll(".key[data-mod]").forEach(btn => {
+  btn.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const mod = btn.dataset.mod;
+
+    if (activeModifiers.has(mod)) {
+      activeModifiers.delete(mod);
+      btn.classList.remove("active-mod");
+      socket.emit("modifier_up", { key: mod });
+      if (mod === "Shift") {
+        shiftActive = false;
+        updateKeyLabels();
+      }
+    } else {
+      activeModifiers.add(mod);
+      btn.classList.add("active-mod");
+      socket.emit("modifier_down", { key: mod });
+      if (mod === "Shift") {
+        shiftActive = true;
+        updateKeyLabels();
+      }
+    }
+  }, { passive: false });
+});
+
+// Two-finger tap = right click
+let twoFingerDetected = false;
+trackpad.addEventListener("touchstart", (e) => {
+  if (e.touches.length === 2) {
+    twoFingerDetected = true;
+  }
+}, { passive: true });
+trackpad.addEventListener("touchend", (e) => {
+  if (twoFingerDetected && e.touches.length === 0) {
+    socket.emit("click", { button: 3 });
+    twoFingerDetected = false;
+  }
+}, { passive: true });
+</script>
+</body>
+</html>
